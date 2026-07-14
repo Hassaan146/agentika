@@ -1,0 +1,47 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 806 >>
+stream
+BT /F1 11 Tf 72 720 Td 14 TL
+(RESEARCH NOTES - SUPPLEMENT TO THE COMPANY BRIEF) Tj T*
+() Tj T*
+(Additional facts not covered in company_brief.txt:) Tj T*
+() Tj T*
+(1. Anthropic created the Model Context Protocol \(MCP\), an open) Tj T*
+(   standard that lets AI assistants connect to external tools and) Tj T*
+(   data sources through interchangeable servers.) Tj T*
+(2. The Claude model family uses a tiered naming scheme, with Haiku) Tj T*
+(   as the fastest tier, Sonnet as the balanced tier, and Opus as) Tj T*
+(   the most capable tier.) Tj T*
+(3. Anthropic publishes AI safety research, including work on) Tj T*
+(   constitutional AI and mechanistic interpretability.) Tj T*
+(4. These notes were prepared for the Week 4 internship demo to test) Tj T*
+(   the agent's PDF reading capability.) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001098 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1168
+%%EOF

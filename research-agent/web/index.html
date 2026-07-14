@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentika — AI Research Agent</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --green: #059669;
+        --green-bright: #10b981;
+        --green-deep: #064e3b;
+        --amber: #fbbf24;
+        --white: #ffffff;
+        --ink: #0f172a;
+        --glass-bg: rgba(255, 255, 255, 0.16);
+        --glass-border: rgba(255, 255, 255, 0.28);
+        --blur: 14px;
+        --radius-lg: 18px;
+        --radius-md: 12px;
+        --font-heading: "Space Grotesk", sans-serif;
+        --font-body: "DM Sans", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: var(--font-body);
+        font-size: 16px;
+        color: var(--white);
+        min-height: 100dvh;
+        overflow: hidden;
+        /* dark backdrop behind the video: the loop-end fade dips into deep
+           green instead of flashing the white page background */
+        background: linear-gradient(180deg, #0b2a1e 0%, #04120d 100%);
+      }
+
+      /* ---- Video background (custom JS fade, no CSS transitions) ---- */
+      #bg-video {
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 115%;
+        height: 115%;
+        object-fit: cover;
+        object-position: top;
+        opacity: 0; /* JS fades it in */
+        z-index: -2;
+        background: var(--green-deep);
+      }
+
+      #bg-overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(6, 25, 18, 0.28) 0%,
+          rgba(6, 25, 18, 0.55) 100%
+        );
+        z-index: -1;
+      }
+
+      /* ---- Glass surfaces (blur lives here; never animate opacity on these) ---- */
+      .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--blur)) saturate(150%);
+        -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+        border: 1px solid var(--glass-border);
+      }
+
+      /* ---- Logo ---- */
+      .logo {
+        position: fixed;
+        top: 24px;
+        left: 36px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-heading);
+        font-weight: 600;
+        font-size: 24px;
+        letter-spacing: -0.06em;
+        z-index: 20;
+        text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+        user-select: none;
+      }
+
+      .logo-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: var(--green);
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 18px rgba(5, 150, 105, 0.5);
+      }
+
+      /* ---- Hero ---- */
+      #hero {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        /* bottom padding lifts the text block above the composer */
+        padding: 0 24px 240px;
+        text-align: center;
+        transition:
+          opacity 0.3s ease-in,
+          transform 0.35s ease-in;
+        z-index: 5;
+      }
+
+      body.chat-mode #hero {
+        opacity: 0;
+        transform: translateY(-28px);
+        pointer-events: none;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 16px 7px 10px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--white);
+      }
+
+      .badge .pill {
+        background: var(--green);
+        color: var(--white);
+        font-family: var(--font-heading);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      h1 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: clamp(44px, 7.5vw, 78px);
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+        text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+        max-width: 820px;
+      }
+
+      h1 .accent {
+        color: var(--green-bright);
+      }
+
+      .subtitle {
+        font-size: 19px;
+        font-weight: 400;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.88);
+        max-width: 620px;
+        text-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      /* ---- Composer (glass search box) ---- */
+      #composer {
+        position: fixed;
+        left: 50%;
+        bottom: 50%;
+        transform: translate(-50%, calc(50% + 168px));
+        width: min(720px, calc(100vw - 32px));
+        border-radius: var(--radius-lg);
+        padding: 12px;
+        z-index: 10;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+        transition:
+          bottom 0.4s cubic-bezier(0.32, 0.72, 0.28, 1),
+          transform 0.4s cubic-bezier(0.32, 0.72, 0.28, 1);
+      }
+
+      body.chat-mode #composer {
+        bottom: 24px;
+        transform: translate(-50%, 0);
+      }
+
+      .input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 8px 8px 8px 18px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      /* focus ring on the whole pill, not the inner input (no floating box) */
+      .input-row:focus-within {
+        box-shadow:
+          0 0 0 2px var(--green-bright),
+          0 4px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      #question {
+        flex: 1;
+        border: 0;
+        outline: 0;
+        font-family: var(--font-body);
+        font-size: 16px;
+        color: var(--ink);
+        background: transparent;
+        min-width: 0;
+        height: 40px;
+      }
+
+      #question::placeholder {
+        color: rgba(0, 0, 0, 0.5);
+      }
+
+      #question:disabled {
+        opacity: 0.55;
+      }
+
+      #send {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--green);
+        color: var(--white);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 0.18s ease-out,
+          background 0.18s ease-out;
+      }
+
+      #send:hover:not(:disabled) {
+        background: var(--green-bright);
+        transform: scale(1.06);
+      }
+
+      #send:active:not(:disabled) {
+        transform: scale(0.96);
+      }
+
+      #send:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+
+      #question:focus,
+      #question:focus-visible {
+        outline: none; /* ring is drawn by .input-row:focus-within instead */
+      }
+
+      #send:focus-visible {
+        outline: 2px solid var(--white);
+        outline-offset: 2px;
+      }
+
+      .composer-hint {
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 6px 2px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.75);
+        font-family: var(--font-heading);
+        letter-spacing: 0.01em;
+      }
+
+      /* ---- Chat ---- */
+      #chat {
+        position: fixed;
+        inset: 0;
+        overflow-y: auto;
+        padding: 88px 16px 132px;
+        z-index: 4;
+        display: none;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+      }
+
+      body.chat-mode #chat {
+        display: block;
+      }
+
+      .thread {
+        max-width: 760px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .msg {
+        max-width: 82%;
+        border-radius: 16px;
+        padding: 13px 18px;
+        line-height: 1.6;
+        overflow-wrap: break-word;
+        animation: rise 0.3s ease-out both;
+      }
+
+      @keyframes rise {
+        from {
+          transform: translateY(14px);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .msg.user {
+        align-self: flex-end;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--ink);
+        border-bottom-right-radius: 6px;
+        font-weight: 500;
+      }
+
+      .msg.agent {
+        align-self: flex-start;
+        background: rgba(6, 40, 30, 0.5);
+        backdrop-filter: blur(var(--blur)) saturate(140%);
+        -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-left: 3px solid var(--green-bright);
+        color: rgba(255, 255, 255, 0.96);
+        border-bottom-left-radius: 6px;
+      }
+
+      .msg.agent .who {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-family: var(--font-heading);
+        font-size: 12.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--green-bright);
+        margin-bottom: 7px;
+      }
+
+      /* error state: warm amber notice, distinct from normal replies */
+      .msg.agent.error {
+        background: rgba(59, 42, 10, 0.55);
+        border-left-color: var(--amber);
+      }
+
+      .msg.agent.error .who {
+        color: var(--amber);
+      }
+
+      .msg.agent.error .body {
+        color: rgba(255, 248, 235, 0.95);
+      }
+
+      .msg.agent a {
+        color: #6ee7b7;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .caret {
+        display: inline-block;
+        width: 8px;
+        height: 1.05em;
+        margin-left: 2px;
+        vertical-align: text-bottom;
+        background: var(--green-bright);
+        animation: blink 0.9s steps(1) infinite;
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      /* typing indicator: 3-dot pulse */
+      .dots {
+        display: inline-flex;
+        gap: 6px;
+        padding: 4px 0;
+      }
+
+      .dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green-bright);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+
+      .dots span:nth-child(2) {
+        animation-delay: 0.18s;
+      }
+
+      .dots span:nth-child(3) {
+        animation-delay: 0.36s;
+      }
+
+      @keyframes pulse {
+        0%,
+        70%,
+        100% {
+          transform: scale(0.7);
+          opacity: 0.45;
+        }
+        35% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .logo {
+          left: 18px;
+        }
+        .msg {
+          max-width: 94%;
+        }
+        #composer {
+          transform: translate(-50%, calc(50% + 190px));
+        }
+        #hero {
+          gap: 20px;
+          padding-bottom: 250px;
+        }
+        h1 {
+          font-size: clamp(34px, 10vw, 44px);
+        }
+        .subtitle {
+          font-size: 16px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <video
+      id="bg-video"
+      muted
+      playsinline
+      autoplay
+      preload="auto"
+      aria-hidden="true"
+    >
+      <source
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260329_050842_be71947f-f16e-4a14-810c-06e83d23ddb5.mp4"
+        type="video/mp4"
+      />
+    </video>
+    <div id="bg-overlay"></div>
+
+    <header class="logo">
+      <span class="logo-mark" aria-hidden="true">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8z" />
+        </svg>
+      </span>
+      Agentika
+    </header>
+
+    <section id="hero" aria-label="Intro">
+      <div class="badge glass">
+        <span class="pill">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="white"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8z"
+            />
+          </svg>
+          New
+        </span>
+        Your research, answered live
+      </div>
+      <h1>
+        Ask anything.<br /><span class="accent">Research</span> everything.
+      </h1>
+      <p class="subtitle">
+        Agentika searches the web, reads your documents, and remembers the whole
+        conversation — sourced answers in seconds.
+      </p>
+    </section>
+
+    <main id="chat" aria-live="polite">
+      <div class="thread" id="thread"></div>
+    </main>
+
+    <form id="composer" class="glass" autocomplete="off">
+      <div class="input-row">
+        <input
+          id="question"
+          type="text"
+          placeholder="Type question..."
+          aria-label="Your question"
+          maxlength="3000"
+        />
+        <button id="send" type="submit" aria-label="Send question">
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 19V5" />
+            <path d="M5 12l7-7 7 7" />
+          </svg>
+        </button>
+      </div>
+      <div class="composer-hint">
+        <span>web search · document reading · session memory</span>
+        <span id="counter">0/3,000</span>
+      </div>
+    </form>
+
+    <script>
+      /* ================= Video background: custom rAF fade system =================
+         - 250ms rAF fade-in on load / loop start
+         - 250ms fade-out when 0.55s remain before the end
+         - fadingOut guard prevents re-triggering from repeated timeupdate events
+         - on ended: opacity 0 -> 100ms delay -> currentTime 0 -> play -> fade in
+         - each new fade cancels running frames; fades resume from current opacity */
+      (function () {
+        const video = document.getElementById("bg-video");
+        let rafId = null;
+        let fadingOut = false;
+
+        function fadeTo(target, duration = 250) {
+          if (rafId) cancelAnimationFrame(rafId); // cancel competing animation
+          const from = parseFloat(video.style.opacity || "0"); // resume, no snapping
+          const t0 = performance.now();
+          function step(now) {
+            const p = Math.min((now - t0) / duration, 1);
+            video.style.opacity = (from + (target - from) * p).toFixed(3);
+            rafId = p < 1 ? requestAnimationFrame(step) : null;
+          }
+          rafId = requestAnimationFrame(step);
+        }
+
+        video.addEventListener("loadeddata", function () {
+          fadingOut = false;
+          fadeTo(1);
+        });
+
+        video.addEventListener("timeupdate", function () {
+          if (
+            !fadingOut &&
+            video.duration &&
+            video.duration - video.currentTime <= 0.55
+          ) {
+            fadingOut = true;
+            fadeTo(0);
+          }
+        });
+
+        video.addEventListener("ended", function () {
+          if (rafId) cancelAnimationFrame(rafId);
+          video.style.opacity = "0";
+          setTimeout(function () {
+            video.currentTime = 0;
+            video.play();
+            fadingOut = false;
+            fadeTo(1);
+          }, 100);
+        });
+
+        /* rAF pauses in background tabs; recover the fade when the tab returns */
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden && !fadingOut && video.readyState >= 2) {
+            fadeTo(1);
+          }
+        });
+      })();
+
+      /* ============================== Chat ============================== */
+      (function () {
+        const form = document.getElementById("composer");
+        const input = document.getElementById("question");
+        const send = document.getElementById("send");
+        const chat = document.getElementById("chat");
+        const thread = document.getElementById("thread");
+        const counter = document.getElementById("counter");
+        const reducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        let busy = false;
+
+        input.addEventListener("input", function () {
+          counter.textContent =
+            input.value.length.toLocaleString("en-US") + "/3,000";
+        });
+
+        function escapeHtml(text) {
+          return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function format(text) {
+          return escapeHtml(text)
+            .replace(
+              /(https?:\/\/[^\s)&]+)/g,
+              '<a href="$1" target="_blank" rel="noopener">$1<\/a>',
+            )
+            .replace(/\n/g, "<br />");
+        }
+
+        function scrollToEnd() {
+          chat.scrollTop = chat.scrollHeight;
+        }
+
+        function addUserMessage(text) {
+          const el = document.createElement("div");
+          el.className = "msg user";
+          el.textContent = text;
+          thread.appendChild(el);
+          scrollToEnd();
+        }
+
+        function addAgentShell() {
+          const el = document.createElement("div");
+          el.className = "msg agent";
+          el.innerHTML =
+            '<div class="who">' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+            '<path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8z" /></svg>' +
+            '<span class="who-label">Agentika</span></div>' +
+            '<div class="body"><span class="dots" role="status" aria-label="Agentika is thinking"><span></span><span></span><span></span></span></div>';
+          thread.appendChild(el);
+          scrollToEnd();
+          return el;
+        }
+
+        function markAsError(bubble, title) {
+          bubble.classList.add("error");
+          bubble.querySelector(".who-label").textContent =
+            title || "Limit reached";
+          bubble.querySelector(".who svg").innerHTML =
+            '<path d="M12 3l10 18H2z" fill="currentColor"/><rect x="11" y="10" width="2" height="5" fill="#3b2a0a"/><rect x="11" y="17" width="2" height="2" fill="#3b2a0a"/>';
+        }
+
+        /* typewriter reveal for replies (instant when reduced motion is set) */
+        function typewrite(el, text) {
+          if (reducedMotion) {
+            el.innerHTML = format(text);
+            scrollToEnd();
+            return;
+          }
+          const speed = 160; // chars per second
+          const t0 = performance.now();
+          let shown = 0;
+          function step(now) {
+            const target = Math.min(
+              text.length,
+              Math.floor(((now - t0) / 1000) * speed),
+            );
+            if (target !== shown) {
+              shown = target;
+              el.innerHTML =
+                format(text.slice(0, shown)) +
+                '<span class="caret" aria-hidden="true"></span>';
+              scrollToEnd();
+            }
+            if (shown < text.length) {
+              requestAnimationFrame(step);
+            } else {
+              el.innerHTML = format(text);
+              scrollToEnd();
+            }
+          }
+          requestAnimationFrame(step);
+        }
+
+        async function ask(question) {
+          busy = true;
+          send.disabled = true;
+          input.disabled = true;
+          document.body.classList.add("chat-mode");
+          addUserMessage(question);
+          const bubble = addAgentShell();
+          const body = bubble.querySelector(".body");
+          try {
+            const res = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: question }),
+            });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+            if (data.kind === "error") {
+              markAsError(bubble, data.title);
+            }
+            typewrite(body, data.reply || "(empty reply)");
+          } catch (err) {
+            markAsError(bubble, "Connection lost");
+            typewrite(
+              body,
+              "Agentika could not be reached. Make sure the server is running, then ask again.",
+            );
+          } finally {
+            busy = false;
+            send.disabled = false;
+            input.disabled = false;
+            input.focus();
+          }
+        }
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const question = input.value.trim();
+          if (!question || busy) return;
+          input.value = "";
+          counter.textContent = "0/3,000";
+          ask(question);
+        });
+
+        input.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            form.requestSubmit();
+          }
+        });
+
+        input.focus();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Runtime logs
+tool_calls.jsonl
+
+# Node (prettier)
+node_modules/

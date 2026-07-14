@@ -1,0 +1,21 @@
+INTERNAL BRIEF — AI COMPANY PROFILE
+Prepared for the Week 4 research demo.
+
+Company: Anthropic
+Founded: 2021, headquartered in San Francisco, USA.
+
+Overview:
+Anthropic is an AI safety and research company. Its flagship product family is
+the Claude series of large language models. The company is known for its work
+on constitutional AI, a training approach that aligns model behavior with an
+explicit set of written principles, and for interpretability research aimed at
+understanding what happens inside large models.
+
+Products:
+- Claude models, served via API and consumer apps.
+- Claude Code, an agentic coding tool that operates in the terminal and IDEs.
+
+Notes:
+The company was founded by former members of another prominent AI research
+laboratory. Leadership details are intentionally omitted from this brief and
+should be researched separately.
