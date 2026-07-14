@@ -101,3 +101,23 @@ All prompts given during Week 4 are recorded here. This file is updated on every
 ---
 
 > did u commit pushed it with professional commit and update prompts.md and progress.md? add this prompt too in the .md file
+
+---
+
+> run it for me
+
+---
+
+> now i am opening the code explain the whole code to me, explain three things whats, hows and why
+
+---
+
+> is it the complete understanding? does it covers complete understanding of the code, backend only?
+
+---
+
+> give me complete understanding so like previously i cant be blank, make a complete explanation including the whats hows and whys and other things. make a markdown file, of this, update the prompts.md and push it to both arbisoft week 4 branch and agentika repositories
+
+---
+
+> i want you to push the complete week 4 code and all the markdown files associated with it to https://github.com/Hassaan146/agentika this repo in the main, and make a commit
