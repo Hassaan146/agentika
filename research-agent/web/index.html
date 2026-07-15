@@ -42,28 +42,24 @@
         color: var(--white);
         min-height: 100dvh;
         overflow: hidden;
-        background: #04120d;
+        /* dark backdrop behind the video: the loop-end fade dips into deep
+           green instead of flashing the white page background */
+        background: linear-gradient(180deg, #0b2a1e 0%, #04120d 100%);
       }
 
-      /* ---- Background: layered CSS gradients (self-contained, no external
-             video asset). Two radial "spotlights" of green over a deep vertical
-             gradient give depth without any network dependency. ---- */
-      #bg {
+      /* ---- Video background (custom JS fade, no CSS transitions) ---- */
+      #bg-video {
         position: fixed;
-        inset: 0;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 115%;
+        height: 115%;
+        object-fit: cover;
+        object-position: top;
+        opacity: 0; /* JS fades it in */
         z-index: -2;
-        background:
-          radial-gradient(
-            60% 50% at 78% 12%,
-            rgba(16, 185, 129, 0.32) 0%,
-            rgba(16, 185, 129, 0) 60%
-          ),
-          radial-gradient(
-            55% 55% at 15% 88%,
-            rgba(5, 150, 105, 0.28) 0%,
-            rgba(5, 150, 105, 0) 60%
-          ),
-          linear-gradient(180deg, #0b2a1e 0%, #061a12 55%, #04120d 100%);
+        background: var(--green-deep);
       }
 
       #bg-overlay {
@@ -518,7 +514,19 @@
     </style>
   </head>
   <body>
-    <div id="bg" aria-hidden="true"></div>
+    <video
+      id="bg-video"
+      muted
+      playsinline
+      autoplay
+      preload="auto"
+      aria-hidden="true"
+    >
+      <source
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260329_050842_be71947f-f16e-4a14-810c-06e83d23ddb5.mp4"
+        type="video/mp4"
+      />
+    </video>
     <div id="bg-overlay"></div>
 
     <header class="logo">
@@ -621,6 +629,64 @@
     </form>
 
     <script>
+      /* ================= Video background: custom rAF fade system =================
+         - 250ms rAF fade-in on load / loop start
+         - 250ms fade-out when 0.55s remain before the end
+         - fadingOut guard prevents re-triggering from repeated timeupdate events
+         - on ended: opacity 0 -> 100ms delay -> currentTime 0 -> play -> fade in
+         - each new fade cancels running frames; fades resume from current opacity */
+      (function () {
+        const video = document.getElementById("bg-video");
+        let rafId = null;
+        let fadingOut = false;
+
+        function fadeTo(target, duration = 250) {
+          if (rafId) cancelAnimationFrame(rafId); // cancel competing animation
+          const from = parseFloat(video.style.opacity || "0"); // resume, no snapping
+          const t0 = performance.now();
+          function step(now) {
+            const p = Math.min((now - t0) / duration, 1);
+            video.style.opacity = (from + (target - from) * p).toFixed(3);
+            rafId = p < 1 ? requestAnimationFrame(step) : null;
+          }
+          rafId = requestAnimationFrame(step);
+        }
+
+        video.addEventListener("loadeddata", function () {
+          fadingOut = false;
+          fadeTo(1);
+        });
+
+        video.addEventListener("timeupdate", function () {
+          if (
+            !fadingOut &&
+            video.duration &&
+            video.duration - video.currentTime <= 0.55
+          ) {
+            fadingOut = true;
+            fadeTo(0);
+          }
+        });
+
+        video.addEventListener("ended", function () {
+          if (rafId) cancelAnimationFrame(rafId);
+          video.style.opacity = "0";
+          setTimeout(function () {
+            video.currentTime = 0;
+            video.play();
+            fadingOut = false;
+            fadeTo(1);
+          }, 100);
+        });
+
+        /* rAF pauses in background tabs; recover the fade when the tab returns */
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden && !fadingOut && video.readyState >= 2) {
+            fadeTo(1);
+          }
+        });
+      })();
+
       /* ============================== Chat ============================== */
       (function () {
         const form = document.getElementById("composer");

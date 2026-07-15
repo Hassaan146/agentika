@@ -11,8 +11,13 @@ and [`progress.md`](progress.md).
 
 > **Status (2026-07-15): implemented.** All phases below have been applied to the
 > code, tests, and docs. Test count went 27 → 50; `ruff check` + `pytest` are
-> green and now enforced in CI. The video/font/path deviations use the
-> gradient/system-font/note fallbacks this plan sanctions (3.1, 3.2, 3.4).
+> green and now enforced in CI. Fonts (3.2) use a system-font stack and paths
+> (3.4) use the provenance note this plan sanctions.
+>
+> **Exception — 3.1 (background video):** reverted at the user's request. The
+> original hardcoded CloudFront `<video>` URL is back in `web/index.html`, so the
+> account-scoped-URL risk this item raised still stands and is accepted for now.
+> Revisit by vendoring the clip locally if that URL ever rotates.
 
 ---
 
