@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Agentika — AI Research Agent</title>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     <style>
       :root {
         --green: #059669;
@@ -24,8 +18,11 @@
         --blur: 14px;
         --radius-lg: 18px;
         --radius-md: 12px;
-        --font-heading: "Space Grotesk", sans-serif;
-        --font-body: "DM Sans", sans-serif;
+        /* Self-hosted / system fonts: no external (Google Fonts) runtime
+           dependency, so the UI renders identically offline and on restricted
+           networks. */
+        --font-heading: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       }
 
       * {
@@ -45,24 +42,28 @@
         color: var(--white);
         min-height: 100dvh;
         overflow: hidden;
-        /* dark backdrop behind the video: the loop-end fade dips into deep
-           green instead of flashing the white page background */
-        background: linear-gradient(180deg, #0b2a1e 0%, #04120d 100%);
+        background: #04120d;
       }
 
-      /* ---- Video background (custom JS fade, no CSS transitions) ---- */
-      #bg-video {
+      /* ---- Background: layered CSS gradients (self-contained, no external
+             video asset). Two radial "spotlights" of green over a deep vertical
+             gradient give depth without any network dependency. ---- */
+      #bg {
         position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 115%;
-        height: 115%;
-        object-fit: cover;
-        object-position: top;
-        opacity: 0; /* JS fades it in */
+        inset: 0;
         z-index: -2;
-        background: var(--green-deep);
+        background:
+          radial-gradient(
+            60% 50% at 78% 12%,
+            rgba(16, 185, 129, 0.32) 0%,
+            rgba(16, 185, 129, 0) 60%
+          ),
+          radial-gradient(
+            55% 55% at 15% 88%,
+            rgba(5, 150, 105, 0.28) 0%,
+            rgba(5, 150, 105, 0) 60%
+          ),
+          linear-gradient(180deg, #0b2a1e 0%, #061a12 55%, #04120d 100%);
       }
 
       #bg-overlay {
@@ -109,6 +110,54 @@
         display: grid;
         place-items: center;
         box-shadow: 0 4px 18px rgba(5, 150, 105, 0.5);
+      }
+
+      /* ---- New-session control (top-right) ---- */
+      #new-session {
+        position: fixed;
+        top: 24px;
+        right: 28px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--blur)) saturate(150%);
+        -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+        color: var(--white);
+        font-family: var(--font-heading);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        z-index: 20;
+        transition:
+          transform 0.18s ease-out,
+          background 0.18s ease-out;
+      }
+
+      #new-session:hover {
+        background: rgba(255, 255, 255, 0.26);
+        transform: translateY(-1px);
+      }
+
+      #new-session:active {
+        transform: translateY(0);
+      }
+
+      #new-session:focus-visible {
+        outline: 2px solid var(--green-bright);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 640px) {
+        #new-session {
+          right: 16px;
+          padding: 7px 11px;
+          font-size: 12px;
+        }
       }
 
       /* ---- Hero ---- */
@@ -469,19 +518,7 @@
     </style>
   </head>
   <body>
-    <video
-      id="bg-video"
-      muted
-      playsinline
-      autoplay
-      preload="auto"
-      aria-hidden="true"
-    >
-      <source
-        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260329_050842_be71947f-f16e-4a14-810c-06e83d23ddb5.mp4"
-        type="video/mp4"
-      />
-    </video>
+    <div id="bg" aria-hidden="true"></div>
     <div id="bg-overlay"></div>
 
     <header class="logo">
@@ -501,6 +538,24 @@
       </span>
       Agentika
     </header>
+
+    <button id="new-session" type="button" title="Start a new session (clears memory)">
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
+      New session
+    </button>
 
     <section id="hero" aria-label="Intro">
       <div class="badge glass">
@@ -566,64 +621,6 @@
     </form>
 
     <script>
-      /* ================= Video background: custom rAF fade system =================
-         - 250ms rAF fade-in on load / loop start
-         - 250ms fade-out when 0.55s remain before the end
-         - fadingOut guard prevents re-triggering from repeated timeupdate events
-         - on ended: opacity 0 -> 100ms delay -> currentTime 0 -> play -> fade in
-         - each new fade cancels running frames; fades resume from current opacity */
-      (function () {
-        const video = document.getElementById("bg-video");
-        let rafId = null;
-        let fadingOut = false;
-
-        function fadeTo(target, duration = 250) {
-          if (rafId) cancelAnimationFrame(rafId); // cancel competing animation
-          const from = parseFloat(video.style.opacity || "0"); // resume, no snapping
-          const t0 = performance.now();
-          function step(now) {
-            const p = Math.min((now - t0) / duration, 1);
-            video.style.opacity = (from + (target - from) * p).toFixed(3);
-            rafId = p < 1 ? requestAnimationFrame(step) : null;
-          }
-          rafId = requestAnimationFrame(step);
-        }
-
-        video.addEventListener("loadeddata", function () {
-          fadingOut = false;
-          fadeTo(1);
-        });
-
-        video.addEventListener("timeupdate", function () {
-          if (
-            !fadingOut &&
-            video.duration &&
-            video.duration - video.currentTime <= 0.55
-          ) {
-            fadingOut = true;
-            fadeTo(0);
-          }
-        });
-
-        video.addEventListener("ended", function () {
-          if (rafId) cancelAnimationFrame(rafId);
-          video.style.opacity = "0";
-          setTimeout(function () {
-            video.currentTime = 0;
-            video.play();
-            fadingOut = false;
-            fadeTo(1);
-          }, 100);
-        });
-
-        /* rAF pauses in background tabs; recover the fade when the tab returns */
-        document.addEventListener("visibilitychange", function () {
-          if (!document.hidden && !fadingOut && video.readyState >= 2) {
-            fadeTo(1);
-          }
-        });
-      })();
-
       /* ============================== Chat ============================== */
       (function () {
         const form = document.getElementById("composer");
@@ -773,6 +770,25 @@
             e.preventDefault();
             form.requestSubmit();
           }
+        });
+
+        /* New session: drop the server-side memory/history for this browser,
+           then reset the UI back to the intro state. */
+        const newSessionBtn = document.getElementById("new-session");
+        newSessionBtn.addEventListener("click", async function () {
+          if (busy) return;
+          newSessionBtn.disabled = true;
+          try {
+            await fetch("/api/new-session", { method: "POST" });
+          } catch (err) {
+            /* even if the call fails, reset the UI so the user isn't stuck */
+          }
+          thread.innerHTML = "";
+          document.body.classList.remove("chat-mode");
+          input.value = "";
+          counter.textContent = "0/3,000";
+          newSessionBtn.disabled = false;
+          input.focus();
         });
 
         input.focus();

@@ -77,7 +77,9 @@ def logging_post_hook(tool: str, args: dict[str, Any], result: ToolResult, durat
         "status": "ok" if result.ok else "error",
     }
     if result.ok and result.data is not None:
-        record["result_preview"] = json.dumps(result.data, ensure_ascii=False, default=str)[:200]
+        record["result_preview"] = json.dumps(result.data, ensure_ascii=False, default=str)[
+            : settings.log_preview_chars
+        ]
     if not result.ok:
         record["error"] = result.error
     _write_log(record)

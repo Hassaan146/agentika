@@ -1,10 +1,12 @@
-groq
-pydantic
-pypdf
-httpx
-beautifulsoup4
-python-dotenv
-fastapi
-uvicorn
-pytest
-ruff
+# Pinned for reproducible installs (see docs: a fresh venv from these versions
+# runs the suite green). Bump deliberately, not by accident. Verified 2026-07-15.
+groq==1.5.0
+pydantic==2.13.4
+pypdf==6.14.2
+httpx==0.28.1
+beautifulsoup4==4.15.0
+python-dotenv==1.2.2
+fastapi==0.139.0
+uvicorn==0.51.0
+pytest==9.1.1
+ruff==0.15.21

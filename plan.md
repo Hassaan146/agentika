@@ -1,8 +1,14 @@
-# Week 4 — Research Agent: Plan (rev 3)
+# Research Agent: Plan (rev 3)
+
+> **Provenance:** this is the original build plan, written when the project
+> lived in an internal `Week4/` internship repo. It is kept here as a design
+> record; paths below refer to this standalone repo's layout (`research-agent/`,
+> `ai-agents-concepts.md`, …). See [`correction-plan.md`](correction-plan.md) for
+> the follow-up remediation roadmap.
 
 ## Context
 
-Week 4 tasks (Arbisoft internship, repo `H:\Skills\Arbisoft`, branch `week-4`): build a research agent demonstrating the concepts from `Week4/ai-agents-concepts.md` — web-search skill, session memory, tool-call hooks, file-read plugin, multi-hop demo. Simple but complete, with production-minded structure.
+Build a research agent demonstrating the concepts from [`ai-agents-concepts.md`](ai-agents-concepts.md) — web-search skill, session memory, tool-call hooks, file-read plugin, multi-hop demo. Simple but complete, with production-minded structure.
 
 **Decisions:** LLM = **Groq free tier** (`llama-3.3-70b-versatile`, OpenAI-compatible function calling). Search = **SerpAPI** (Google results, free tier 100 searches/mo).
 
@@ -10,7 +16,7 @@ Week 4 tasks (Arbisoft internship, repo `H:\Skills\Arbisoft`, branch `week-4`): 
 
 **Rev 2** incorporates the user's review: proper memory subsystem (internal, not tools), tool registry, richer hooks + structured logging, error handling & retries, page-fetch fallback, file-reader hardening, Pydantic schemas, central config, unit tests, documented prompts, architecture diagram, and a written justification for not using LangChain.
 
-**This turn's deliverable is documentation only:** write `Week4/plan.md` + `Week4/progress.md`, append prompt to `prompts.md`, push. Implementation starts after user approves the pushed plan.
+**This turn's deliverable is documentation only:** write `plan.md` + `progress.md`, append prompt to `prompts.md`, push. Implementation starts after user approves the pushed plan.
 
 ## Architecture
 
@@ -46,7 +52,7 @@ Week 4 tasks (Arbisoft internship, repo `H:\Skills\Arbisoft`, branch `week-4`): 
 ## File layout
 
 ```
-Week4/research-agent/
+research-agent/
 ├── main.py            # CLI chat + --demo mode
 ├── agent.py           # ReAct loop only (~80 lines)
 ├── config.py          # central config: env validation, defaults
@@ -144,13 +150,13 @@ Course goal is *conceptual clarity*: a hand-rolled loop makes planner/executor/m
 
 ### 18. Diagram
 
-The architecture + flow diagram above goes into `Week4/plan.md` and the README.
+The architecture + flow diagram above goes into `plan.md` and the README.
 
 ## Execution steps (after plan approval)
 
-1. Write `Week4/plan.md` (this design incl. diagram) and `Week4/progress.md` (checklist: 6 tasks × status, updated as work lands).
-2. Append today's prompt to `Week4/prompts.md`.
-3. Commit + push to `origin/week-4`.
+1. Write `plan.md` (this design incl. diagram) and `progress.md` (checklist: 6 tasks × status, updated as work lands).
+2. Append today's prompt to `prompts.md`.
+3. Commit + push.
 4. **Stop and wait** for user approval of the pushed plan before implementing `research-agent/`.
 
 ## Verification (implementation phase, later)

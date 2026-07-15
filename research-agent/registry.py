@@ -22,7 +22,7 @@ class ToolRegistry:
         self.hooks = hooks
         self._tools: dict[str, tuple[Callable, type[BaseModel], dict]] = {}
 
-    def register(self, input_model: type[BaseModel], description: str, name: str = None):
+    def register(self, input_model: type[BaseModel], description: str, name: str | None = None):
         def decorator(fn: Callable) -> Callable:
             tool_name = name or fn.__name__
             schema = {

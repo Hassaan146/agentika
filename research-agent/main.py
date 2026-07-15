@@ -17,12 +17,25 @@ DEMO_TURNS = [
 ]
 
 
-def build():
+def build_shared():
+    """Process-wide, stateless pieces: the tool registry (pure functions) and
+    metrics/logging hooks. Safe to share across sessions - only the Agent below
+    holds per-session state (history + memory)."""
     hooks, metrics = default_hook_manager()
     registry = ToolRegistry(hooks)
     register_all(registry)
-    agent = Agent(registry, MemoryStore())
-    return agent, metrics
+    return registry, metrics
+
+
+def build_agent(registry: ToolRegistry, client=None) -> Agent:
+    """A fresh, isolated Agent (own history + memory) over the shared registry."""
+    return Agent(registry, MemoryStore(), client=client)
+
+
+def build():
+    """CLI convenience: shared wiring + a single agent."""
+    registry, metrics = build_shared()
+    return build_agent(registry), metrics
 
 
 def run_demo(agent: Agent, metrics) -> None:

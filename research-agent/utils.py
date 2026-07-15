@@ -4,14 +4,19 @@ import time
 
 import httpx
 
+from config import settings
+
 # Only transient failures are retried; auth/bad-input errors fail immediately.
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 
 
-def retry_http(fn, attempts: int = 3, base_delay: float = 1.0):
+def retry_http(fn, attempts: int | None = None, base_delay: float | None = None):
     """Run fn() with exponential backoff (1s -> 2s -> 4s) on timeouts and
     retryable HTTP status codes. fn must raise httpx errors (use
-    response.raise_for_status())."""
+    response.raise_for_status()). Defaults come from config so retry behaviour
+    is tunable without touching call sites."""
+    attempts = settings.retry_attempts if attempts is None else attempts
+    base_delay = settings.retry_base_delay if base_delay is None else base_delay
     last_exc = None
     for attempt in range(1, attempts + 1):
         try:

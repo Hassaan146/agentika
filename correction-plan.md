@@ -7,7 +7,12 @@ the **fix**, the **why**, and **how to verify**.
 Severity: 🔴 fix before deploy · 🟡 should fix · 🟢 polish.
 
 This is a standalone companion to [`plan.md`](plan.md) (the original build plan)
-and [`progress.md`](progress.md). Nothing here is applied yet — it is the roadmap.
+and [`progress.md`](progress.md).
+
+> **Status (2026-07-15): implemented.** All phases below have been applied to the
+> code, tests, and docs. Test count went 27 → 50; `ruff check` + `pytest` are
+> green and now enforced in CI. The video/font/path deviations use the
+> gradient/system-font/note fallbacks this plan sanctions (3.1, 3.2, 3.4).
 
 ---
 
