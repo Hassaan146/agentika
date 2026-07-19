@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Agentika — AI Research Agent</title>
+    <title>Agentika - AI Research Agent</title>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <style>
       :root {
@@ -21,8 +21,12 @@
         /* Self-hosted / system fonts: no external (Google Fonts) runtime
            dependency, so the UI renders identically offline and on restricted
            networks. */
-        --font-heading: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --font-heading:
+          system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+          sans-serif;
+        --font-body:
+          system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+          sans-serif;
       }
 
       * {
@@ -547,7 +551,11 @@
       Agentika
     </header>
 
-    <button id="new-session" type="button" title="Start a new session (clears memory)">
+    <button
+      id="new-session"
+      type="button"
+      title="Start a new session (clears memory)"
+    >
       <svg
         width="15"
         height="15"
@@ -588,7 +596,7 @@
       </h1>
       <p class="subtitle">
         Agentika searches the web, reads your documents, and remembers the whole
-        conversation — sourced answers in seconds.
+        conversation. Sourced answers in seconds.
       </p>
     </section>
 
@@ -656,6 +664,14 @@
           fadingOut = false;
           fadeTo(1);
         });
+
+        /* Cached loads fire `loadeddata` before this script runs, so the
+           listener above misses it and the video stays at opacity 0 (looks
+           like a static background). If data is already buffered, fade in now. */
+        if (video.readyState >= 2) {
+          fadingOut = false;
+          fadeTo(1);
+        }
 
         video.addEventListener("timeupdate", function () {
           if (
