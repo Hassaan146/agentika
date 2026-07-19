@@ -43,9 +43,7 @@ def _default_agent_factory():
     return build_agent(_registry)
 
 
-session_manager = SessionManager(
-    _default_agent_factory, settings.session_ttl_seconds, settings.session_max
-)
+session_manager = SessionManager(_default_agent_factory, settings.session_ttl_seconds, settings.session_max)
 rate_limiter = RateLimiter(settings.rate_limit_per_min)
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
@@ -133,8 +131,7 @@ def chat(req: ChatRequest, request: Request, response: Response) -> dict:
         ):
             return _err(
                 "Session limit reached",
-                "This conversation grew past the model's size limit. "
-                "Start a new session to continue.",
+                "This conversation grew past the model's size limit. Start a new session to continue.",
             )
         return _err(
             "Limit reached",
